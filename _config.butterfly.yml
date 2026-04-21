@@ -1,0 +1,174 @@
+# Butterfly Theme Configuration
+# Docs: https://butterfly.js.org/
+
+# ========== 导航栏 ==========
+nav:
+  logo:
+  display_title: true
+  fixed: false
+
+menu:
+  首页: / || fas fa-home
+  归档: /archives/ || fas fa-archive
+  标签: /tags/ || fas fa-tags
+  关于: /about/ || fas fa-user
+
+# ========== 代码块 ==========
+highlight_theme: mac light
+highlight_copy: true
+highlight_lang: true
+highlight_shrink: false
+highlight_height_limit: 400
+code_word_wrap: true
+
+# ========== 社交图标 ==========
+social:
+  fab fa-github: https://github.com/ansoco || Github
+
+# ========== 首页 ==========
+# 主页顶部大图
+index_img:
+default_top_img: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)
+post_default_top_img: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)
+
+# 首页文章卡片样式
+index_layout: 3
+index_post_content:
+  method: 2
+  length: 300
+
+# ========== 文章页 ==========
+post_meta:
+  page:
+    date_type: created
+    date_format: YYYY-MM-DD
+    categories: true
+    tags: true
+    label: true
+  post:
+    date_type: both
+    date_format: YYYY-MM-DD
+    categories: true
+    tags: true
+    label: true
+
+# 文章版权信息
+post_copyright:
+  enable: true
+  decode: false
+  author_href:
+  license: CC BY-NC-SA 4.0
+  license_url: https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+# 目录 TOC
+toc:
+  post: true
+  page: false
+  number: true
+  expand: false
+  style_simple: false
+  scroll_percent: true
+
+# ========== 页脚 ==========
+footer:
+  owner:
+    enable: true
+    since: 2026
+  custom_text:
+  copyright: true
+
+# ========== 侧边栏 ==========
+aside:
+  enable: true
+  hide: false
+  button: true
+  mobile: true
+  position: right
+  display:
+    archive: true
+    tag: true
+    category: true
+  card_author:
+    enable: true
+    description: '探索 RL、LLM Training 与 Agentic AI'
+    button:
+      enable: true
+      icon: fab fa-github
+      text: Follow Me
+      link: https://github.com/ansoco
+  card_announcement:
+    enable: true
+    content: '技术笔记，不定期更新'
+  card_recent_post:
+    enable: true
+    limit: 5
+    sort: date
+    sort_order:
+  card_categories:
+    enable: true
+    limit: 8
+    expand: none
+    sort_order:
+  card_tags:
+    enable: true
+    limit: 20
+    color: true
+    orderby: random
+    order: 1
+    sort_order:
+  card_archives:
+    enable: true
+    type: monthly
+    format: MMMM YYYY
+    order: -1
+    limit: 8
+    sort_order:
+
+# ========== 右下角按钮 ==========
+readmode: true
+darkmode:
+  enable: true
+  button: true
+  autoChangeMode: false
+
+# ========== 字体 ==========
+font:
+  global-font-size: "16px"
+  code-font-size: "14px"
+  font-family: "-apple-system, BlinkMacSystemFont, 'Noto Sans SC', 'Segoe UI', sans-serif"
+  code-font-family: "'JetBrains Mono', 'Fira Code', monospace"
+
+# ========== 美化 ==========
+beautify:
+  enable: true
+  field: post
+  title-prefix-icon: '\f0c1'
+  title-prefix-icon-color: '#4361ee'
+
+# 圆角
+hr_icon:
+  enable: true
+  icon: '\f21e'
+  icon-top:
+
+# 复制设置
+copy:
+  enable: true
+  copyright:
+    enable: true
+    limit_count: 150
+
+# ========== 分析与搜索 ==========
+local_search:
+  enable: false
+
+# ========== 图片 ==========
+photofigcaption: false
+fancybox: true
+
+# ========== 通知 ==========
+snackbar:
+  enable: true
+  position: bottom-left
+  bg_light: '#49b1f5'
+  bg_dark: '#2d3436'
