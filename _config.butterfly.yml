@@ -5,7 +5,7 @@
 nav:
   logo:
   display_title: true
-  fixed: false
+  fixed: true
 
 menu:
   首页: / || fas fa-home
@@ -26,10 +26,10 @@ social:
   fab fa-github: https://github.com/ansoco || Github
 
 # ========== 首页 ==========
-# 主页顶部大图
+# 主页顶部大图 - 深蓝青渐变背景
 index_img:
-default_top_img: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)
-post_default_top_img: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)
+default_top_img: linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(59, 130, 246, 0.85) 50%, rgba(20, 184, 166, 0.8) 100%)
+post_default_top_img: linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(59, 130, 246, 0.85) 50%, rgba(20, 184, 166, 0.8) 100%)
 
 # 首页文章卡片样式
 index_layout: 3
@@ -64,10 +64,10 @@ post_copyright:
 toc:
   post: true
   page: false
-  number: true
+  number: false
   expand: false
   style_simple: false
-  scroll_percent: true
+  scroll_percent: false
 
 # ========== 页脚 ==========
 footer:
@@ -135,15 +135,15 @@ darkmode:
 font:
   global-font-size: "16px"
   code-font-size: "14px"
-  font-family: "-apple-system, BlinkMacSystemFont, 'Noto Sans SC', 'Segoe UI', sans-serif"
-  code-font-family: "'JetBrains Mono', 'Fira Code', monospace"
+  font-family: "-apple-system, BlinkMacSystemFont, 'Noto Sans SC', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif"
+  code-font-family: "'JetBrains Mono', 'Fira Code', 'SF Mono', Monaco, monospace"
 
 # ========== 美化 ==========
 beautify:
   enable: true
   field: post
   title-prefix-icon: '\f0c1'
-  title-prefix-icon-color: '#4361ee'
+  title-prefix-icon-color: '#3b82f6'
 
 # 圆角
 hr_icon:
@@ -170,5 +170,10 @@ fancybox: true
 snackbar:
   enable: true
   position: bottom-left
-  bg_light: '#49b1f5'
+  bg_light: '#3b82f6'
   bg_dark: '#2d3436'
+
+# ========== 自定义CSS注入（玻璃态效果） ==========
+inject:
+  head:
+    - <link rel="stylesheet" href="/blog/css/custom.css">
