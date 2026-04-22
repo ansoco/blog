@@ -176,4 +176,4 @@ snackbar:
 # ========== 自定义CSS注入（玻璃态效果） ==========
 inject:
   head:
-    - <link rel="stylesheet" href="/blog/css/custom.css">
+    - <link rel="stylesheet" href="/blog/css/custom.css?v=2">
