@@ -95,7 +95,4 @@ mathjax:
 
 # Deployment
 deploy:
-  type: git
-  repo: https://github.com/ansoco/blog.git
-  branch: gh-pages
-  message: "Site updated: {{ now('YYYY-MM-DD HH:mm:ss') }}"
+  type: ''

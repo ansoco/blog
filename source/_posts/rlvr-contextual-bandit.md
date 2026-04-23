@@ -1,6 +1,7 @@
 ---
 title: "从 Scorer 到 Contextual Bandit：拆解 RLVR 的概念体系与本质"
 date: 2026-04-17 19:00:00
+mathjax: true
 tags:
   - RL
   - RLHF
@@ -185,7 +186,7 @@ RLVR 的问题结构是 contextual bandit，但它的实现方式超越了经典
 ### RLVR 的优化目标
 
 $$
-\max_\theta \mathbb{E}_{x \sim D, y \sim \pi_\theta(\cdot \mid x)} [ R(x, y) ] - \beta \cdot KL( \pi_\theta \parallel \pi_{ref} )
+\max_\theta \mathbb{E}\_{x \sim D, y \sim \pi\_\theta(\cdot \mid x)} [ R(x, y) ] - \beta \cdot KL( \pi\_\theta \parallel \pi_{ref} )
 $$
 
 KL 项在 autoregressive 模型中分解为逐 token 求和，每个 token 位置都有独立的 KL 惩罚：
