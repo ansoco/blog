@@ -85,6 +85,17 @@ pagination_dir: page
 # Extensions
 theme: butterfly
 
+# MathJax 配置（支持数学公式）
+mathjax:
+  tags: none
+  single_dollars: true
+  cjk_width: 0.9
+  normal_width: 0.6
+  match_mathjax_render: true
+
 # Deployment
 deploy:
-  type: ''
+  type: git
+  repo: https://github.com/ansoco/blog.git
+  branch: gh-pages
+  message: "Site updated: {{ now('YYYY-MM-DD HH:mm:ss') }}"

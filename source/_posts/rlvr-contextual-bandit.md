@@ -18,7 +18,7 @@ cover: false
 
 在 LLM 评估与 RLHF 训练中，有一组高频出现但容易混淆的术语。它们的层级关系如下：
 
-```text
+```
 Scorer（泛称：给输出打分的东西）
 ├── 二值 Scorer
 │   ├── Checker（规则/程序判对错，偏工程用语）
@@ -32,7 +32,7 @@ Reward = f(各种 Scorer 的输出加权合成)
 ```
 
 | 概念 | 本质 | 输出 |
-|---|---|---|
+|:---:|:---|:---:|
 | **Scorer** | 泛称，任何给输出打分的东西 | 连续分或二值 |
 | **Checker / Verifier** | 二值判定器，语义上几乎等价 | 0 / 1 |
 | **GRM** | 一种 Scorer（生成式，基于 Rubrics） | 连续分 |
@@ -55,7 +55,7 @@ Checker 和 Verifier 在多数文献和工程实践中**可互换**，都是"判
 
 ### 在训练流程中的组合
 
-```text
+```
 Reward 信号来源
 ├── Verifier / Checker（规则验证）
 │   └── 确定性答案：数学 / 代码测试用例 → 0 或 1
@@ -66,7 +66,9 @@ Reward 信号来源
 
 最终 reward 的合成公式形如：
 
-> **reward = w_rubrics × score_rubrics + w_qrm × score_qrm**
+$$
+reward = w_{rubrics} \times score_{rubrics} + w_{qrm} \times score_{qrm}
+$$
 
 ### 为什么同时需要两者
 
@@ -88,20 +90,20 @@ Reward 信号来源
 ### ORM → PRM 的演进
 
 | 类型 | 全称 | 粒度 | 角色 |
-|---|---|---|---|
+|:---:|:---|:---:|:---|
 | **ORM** | Outcome Reward Model | trajectory 级 | Verifier/Checker 的模型化版本——只看最终结果 |
 | **PRM** | Process Reward Model | step 级 | Scorer 的 agentic 版本——对每一步打分 |
 | **AgentPRM** | Agent Process Reward Model | step 级 + action-aware | PRM 专为 agent action 序列设计的变体 |
 
-在 agent trajectory `[s₀→a₁→s₁→a₂→s₂→...→aₙ→sₙ]` 中：
+在 agent trajectory $[s_0 \rightarrow a_1 \rightarrow s_1 \rightarrow a_2 \rightarrow s_2 \rightarrow ... \rightarrow a_n \rightarrow s_n]$ 中：
 
-- **Verifier/Checker**：只看 sₙ（最终结果对不对），给出 outcome reward（0/1）。
-- **PRM / AgentPRM**（step-level Scorer）：看每个 (sᵢ, aᵢ₊₁)，判断这步 action 好不好。
+- **Verifier/Checker**：只看 $s_n$（最终结果对不对），给出 outcome reward（0/1）。
+- **PRM / AgentPRM**（step-level Scorer）：看每个 $(s_i, a_{i+1})$，判断这步 action 好不好。
 - **Rubric**：定义每步 action 的好坏标准——工具调用参数正确？工具选对了？检索 query 是否相关？
 
-```text
-step_reward[i] = PRM(sᵢ, aᵢ₊₁)   ← step-level
-outcome_reward = Verifier(sₙ)     ← trajectory-level
+```
+step_reward[i] = PRM(s_i, a_{i+1})   ← step-level
+outcome_reward = Verifier(s_n)     ← trajectory-level
 total_reward = f(step_rewards, outcome_reward)
 ```
 
@@ -126,11 +128,11 @@ total_reward = f(step_rewards, outcome_reward)
 ### 严格来说是 Contextual Bandit
 
 | 要素 | 经典 MAB | Contextual Bandit | RLVR |
-|---|---|---|---|
+|:---:|:---|:---|:---|
 | Context | 无 | 每轮有不同的 x | prompt |
 | Arm/Action | K 个固定 arm | 给定 context 选 action | 给定 prompt 采样 response |
-| 策略 | 全局一个分布 π(a) | 条件策略 π(a\|x) | π(response\|prompt) = LLM |
-| 目标 | 最大化累计 reward | 最大化 E[r(x,a)] | 最大化 E[verifier(prompt, response)] |
+| 策略 | 全局一个分布 $\pi(a)$ | 条件策略 $\pi(a \mid x)$ | $\pi(response \mid prompt)$ = LLM |
+| 目标 | 最大化累计 reward | 最大化 $E[r(x,a)]$ | 最大化 $E[verifier(prompt, response)]$ |
 
 三个条件确认 RLVR 是 contextual bandit：
 
@@ -142,11 +144,11 @@ total_reward = f(step_rewards, outcome_reward)
 
 RLVR 中 REINFORCE/GRPO 的梯度公式展开到了每个 token：
 
-```text
-∇J ≈ Σᵢ ∇log π(aᵢ|s<ᵢ) · R(τ)
-```
+$$
+\nabla J \approx \sum_i \nabla \log \pi(a_i \mid s_{<i}) \cdot R(\tau)
+$$
 
-但 **R(τ) 对所有 token 完全相同**。token 37 做了关键推理，token 12 输出了 filler word，两者乘的 reward 信号一模一样。梯度在形式上是 token 级的，但**信息量是 trajectory 级的**。
+但 **$R(\tau)$ 对所有 token 完全相同**。token 37 做了关键推理，token 12 输出了 filler word，两者乘的 reward 信号一模一样。梯度在形式上是 token 级的，但**信息量是 trajectory 级的**。
 
 {% note info %}
 Token 级梯度是 autoregressive 参数化的副产品，不是 token 级的 credit assignment。只要 reward 信号对所有 token 是同一个标量广播，优化的信息结构就是 bandit。
@@ -156,7 +158,7 @@ Token 级梯度是 autoregressive 参数化的副产品，不是 token 级的 cr
 
 Contextual bandit 的核心难题是**泛化**：模型不可能对每个 prompt 都采样足够多次，必须从已见 prompt 的 reward 信号泛化到未见 prompt。
 
-泛化的物理载体是**参数共享**：所有 prompt 共享同一组 Transformer 参数 θ，语义相似的 prompt 产生相似的 hidden states，对 prompt A 的策略更新通过 attention / FFN 权重传导到 prompt B。
+泛化的物理载体是**参数共享**：所有 prompt 共享同一组 Transformer 参数 $\theta$，语义相似的 prompt 产生相似的 hidden states，对 prompt A 的策略更新通过 attention / FFN 权重传导到 prompt B。
 
 这与经典 MAB 形成鲜明对比：经典 MAB 每个 arm 有独立的 reward 估计（Q-table），arm A 的经验不影响 arm B。**参数共享 + 表征学习是让 contextual bandit 在无限 context 空间上可行的唯一途径。**
 
@@ -167,10 +169,10 @@ Contextual bandit 的核心难题是**泛化**：模型不可能对每个 prompt
 RLVR 的问题结构是 contextual bandit，但它的实现方式超越了经典 CB 框架的若干基础假设：
 
 | 维度 | 经典 CB | RLVR 超越之处 |
-|---|---|---|
+|:---:|:---|:---|
 | **Action 空间** | 有限离散 | 无穷、变长、结构化 token 序列 |
 | **Action 内部** | 原子不可分 | autoregressive 序列，梯度可达 token 级 |
-| **正则化** | L2 on 参数 | KL(π_θ \|\| π_ref) on 分布 |
+| **正则化** | L2 on 参数 | $KL(\pi_\theta \parallel \pi_{ref})$ on 分布 |
 | **平稳性** | 假设 i.i.d. | on-policy 导致非平稳 |
 | **采样策略** | 单次拉取 | N 路并行 + 组内对比（GRPO） |
 
@@ -182,9 +184,9 @@ RLVR 的问题结构是 contextual bandit，但它的实现方式超越了经典
 
 ### RLVR 的优化目标
 
-```text
-max_θ  E_{x~D, y~π_θ(·|x)} [ R(x, y) ] - β · KL( π_θ || π_ref )
-```
+$$
+\max_\theta \mathbb{E}_{x \sim D, y \sim \pi_\theta(\cdot \mid x)} [ R(x, y) ] - \beta \cdot KL( \pi_\theta \parallel \pi_{ref} )
+$$
 
 KL 项在 autoregressive 模型中分解为逐 token 求和，每个 token 位置都有独立的 KL 惩罚：
 
@@ -199,10 +201,10 @@ KL 实际上承担了部分 credit assignment 的功能——它告诉模型"哪
 ### 与经典 CB 正则化的对比
 
 | 维度 | 经典 CB 正则化 | RLVR KL 正则化 |
-|---|---|---|
-| **正则化对象** | 参数 θ 本身（权重向量） | 策略分布 π_θ（函数空间） |
-| **度量** | L2 范数 ‖θ‖² | KL(π_θ \|\| π_ref) |
-| **参考点** | 原点（θ=0） | SFT reference model |
+|:---:|:---|:---|
+| **正则化对象** | 参数 $\theta$ 本身（权重向量） | 策略分布 $\pi_\theta$（函数空间） |
+| **度量** | L2 范数 $\|\theta\|^2$ | $KL(\pi_\theta \parallel \pi_{ref})$ |
+| **参考点** | 原点（$\theta=0$） | SFT reference model |
 | **语义** | "参数不要太大" → 防过拟合 | "行为不要偏离太远" → 防能力退化 |
 | **动机** | 让学习过程在统计上可行 | 让学习结果在功能上可用 |
 
@@ -217,9 +219,9 @@ KL 实际上承担了部分 credit assignment 的功能——它告诉模型"哪
 
 RLVR 的 KL 约束还有一个优美的闭式解：
 
-```text
-π*(y|x) ∝ π_ref(y|x) · exp(R(x,y) / β)
-```
+$$
+\pi^*(y \mid x) \propto \pi_{ref}(y \mid x) \cdot \exp(R(x,y) / \beta)
+$$
 
 最优策略是在 reference policy 基础上按 reward 做指数重加权。这正是 DPO 的理论基础——DPO 直接拟合这个闭式解而跳过了 RL。
 

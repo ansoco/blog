@@ -6,6 +6,7 @@ nav:
   logo:
   display_title: true
   fixed: true
+  darkmode: true
 
 menu:
   首页: / || fas fa-home
@@ -176,4 +177,4 @@ snackbar:
 # ========== 自定义CSS注入（玻璃态效果） ==========
 inject:
   head:
-    - <link rel="stylesheet" href="/blog/css/custom.css?v=2">
+    - <link rel="stylesheet" href="/blog/css/custom.css">
