@@ -1,0 +1,433 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>从 Scorer 到 Contextual Bandit：拆解 RLVR 的概念体系与本质 | Tech Blog</title><meta name="author" content="ansoco"><meta name="copyright" content="ansoco"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="从 RL 训练中常见的 Scorer &#x2F; Rubric &#x2F; Reward &#x2F; Checker &#x2F; Verifier 等概念出发，逐步厘清它们之间的关系，最终回答一个核心问题：RLVR 的本质是什么？">
+<meta property="og:type" content="article">
+<meta property="og:title" content="从 Scorer 到 Contextual Bandit：拆解 RLVR 的概念体系与本质">
+<meta property="og:url" content="https://ansoco.github.io/blog/2026/04/17/rlvr-contextual-bandit/">
+<meta property="og:site_name" content="Tech Blog">
+<meta property="og:description" content="从 RL 训练中常见的 Scorer &#x2F; Rubric &#x2F; Reward &#x2F; Checker &#x2F; Verifier 等概念出发，逐步厘清它们之间的关系，最终回答一个核心问题：RLVR 的本质是什么？">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://ansoco.github.io/blog/img/butterfly-icon.png">
+<meta property="article:published_time" content="2026-04-17T11:00:00.000Z">
+<meta property="article:modified_time" content="2026-04-23T03:44:20.514Z">
+<meta property="article:author" content="ansoco">
+<meta property="article:tag" content="Agentic Training">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="RL">
+<meta property="article:tag" content="RLHF">
+<meta property="article:tag" content="RLVR">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ansoco.github.io/blog/img/butterfly-icon.png"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "从 Scorer 到 Contextual Bandit：拆解 RLVR 的概念体系与本质",
+  "url": "https://ansoco.github.io/blog/2026/04/17/rlvr-contextual-bandit/",
+  "image": "https://ansoco.github.io/blog/img/butterfly-icon.png",
+  "datePublished": "2026-04-17T11:00:00.000Z",
+  "dateModified": "2026-04-23T03:44:20.514Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "ansoco",
+      "url": "https://ansoco.github.io/blog"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/blog/img/favicon.png"><link rel="canonical" href="https://ansoco.github.io/blog/2026/04/17/rlvr-contextual-bandit/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/blog/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/blog/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":150,"languages":{"author":"作者: ansoco","link":"链接: ","source":"来源: Tech Blog","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'null',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#3b82f6","bgDark":"#2d3436","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: false,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '从 Scorer 到 Contextual Bandit：拆解 RLVR 的概念体系与本质',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/blog/css/custom.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/blog/img/butterfly-icon.png" onerror="this.onerror=null;this.src='/blog/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/blog/archives/"><div class="headline">文章</div><div class="length-num">1</div></a><a href="/blog/tags/"><div class="headline">标签</div><div class="length-num">5</div></a><a href="/blog/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/blog/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/blog/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/blog/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/blog/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background: linear-gradient(135deg,;"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/blog/"><span class="site-name">Tech Blog</span></a><a class="nav-page-title" href="/blog/"><span class="site-name">从 Scorer 到 Contextual Bandit：拆解 RLVR 的概念体系与本质</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/blog/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/blog/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/blog/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/blog/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">从 Scorer 到 Contextual Bandit：拆解 RLVR 的概念体系与本质</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-04-17T11:00:00.000Z" title="发表于 2026-04-17 19:00:00">2026-04-17</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-04-23T03:44:20.514Z" title="更新于 2026-04-23 11:44:20">2026-04-23</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/blog/categories/AI-Research/">AI Research</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="一、基础概念：Scorer-Rubric-Reward-Checker-Verifier"><a href="#一、基础概念：Scorer-Rubric-Reward-Checker-Verifier" class="headerlink" title="一、基础概念：Scorer &#x2F; Rubric &#x2F; Reward &#x2F; Checker &#x2F; Verifier"></a>一、基础概念：Scorer &#x2F; Rubric &#x2F; Reward &#x2F; Checker &#x2F; Verifier</h2><p>在 LLM 评估与 RLHF 训练中，有一组高频出现但容易混淆的术语。它们的层级关系如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Scorer（泛称：给输出打分的东西）</span><br><span class="line">├── 二值 Scorer</span><br><span class="line">│   ├── Checker（规则/程序判对错，偏工程用语）</span><br><span class="line">│   └── Verifier（≈Checker，偏学术用语，也可以是模型）</span><br><span class="line">├── 连续 Scorer</span><br><span class="line">│   ├── GRM（Generative Reward Model，生成式打分）</span><br><span class="line">│   └── QRM（Quality Reward Model，质量打分）</span><br><span class="line">└── Rubric 是 Scorer 依据的标准，不是 Scorer 本身</span><br><span class="line"></span><br><span class="line">Reward = f(各种 Scorer 的输出加权合成)</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th align="center">概念</th>
+<th align="left">本质</th>
+<th align="center">输出</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong>Scorer</strong></td>
+<td align="left">泛称，任何给输出打分的东西</td>
+<td align="center">连续分或二值</td>
+</tr>
+<tr>
+<td align="center"><strong>Checker &#x2F; Verifier</strong></td>
+<td align="left">二值判定器，语义上几乎等价</td>
+<td align="center">0 &#x2F; 1</td>
+</tr>
+<tr>
+<td align="center"><strong>GRM</strong></td>
+<td align="left">一种 Scorer（生成式，基于 Rubrics）</td>
+<td align="center">连续分</td>
+</tr>
+<tr>
+<td align="center"><strong>QRM</strong></td>
+<td align="left">一种 Scorer（质量维度）</td>
+<td align="center">连续分</td>
+</tr>
+<tr>
+<td align="center"><strong>Reward</strong></td>
+<td align="left">最终信号，由上述 Scorer 合成</td>
+<td align="center">标量</td>
+</tr>
+<tr>
+<td align="center"><strong>Rubric</strong></td>
+<td align="left">评分标准本身，不是执行者</td>
+<td align="center">—</td>
+</tr>
+</tbody></table>
+<p>其中 <strong>Rubric</strong> 是纯描述性的评分量规，定义”好坏”的标准（类似考试评分细则）。Scorer 拿着 Rubric 去打分。Reward 是最终喂给 RL trainer 的标量信号，由多种 Scorer 加权合成。</p>
+<p>Checker 和 Verifier 在多数文献和工程实践中<strong>可互换</strong>，都是”判对错”的二值判定器。如果硬要区分：Verifier 更偏学术用语（<em>Let’s Verify Step by Step</em>, RLVR 等），Checker 更偏工程用语（unit test checker, format checker）。</p>
+<hr>
+<h2 id="二、GRM-与-QRM：为什么需要两个？"><a href="#二、GRM-与-QRM：为什么需要两个？" class="headerlink" title="二、GRM 与 QRM：为什么需要两个？"></a>二、GRM 与 QRM：为什么需要两个？</h2><h3 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h3><ul>
+<li><strong>GRM（Generative Reward Model）</strong>：用生成式模型逐条判定 Rubrics 覆盖度，输出连续分数。</li>
+<li><strong>QRM（Quality Reward Model）</strong>：综合评估回答的整体质量（准确性、完整性、可读性、安全性等），与 GT 对比后给出连续质量分。</li>
+</ul>
+<h3 id="在训练流程中的组合"><a href="#在训练流程中的组合" class="headerlink" title="在训练流程中的组合"></a>在训练流程中的组合</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Reward 信号来源</span><br><span class="line">├── Verifier / Checker（规则验证）</span><br><span class="line">│   └── 确定性答案：数学 / 代码测试用例 → 0 或 1</span><br><span class="line">├── GRM → Rubrics 覆盖度 → 连续分</span><br><span class="line">├── QRM → 整体质量 → 连续分</span><br><span class="line">└── 加权合成 → final reward</span><br></pre></td></tr></table></figure>
+
+<p>最终 reward 的合成公式形如：</p>
+<p>$$<br>reward &#x3D; w_{rubrics} \times score_{rubrics} + w_{qrm} \times score_{qrm}<br>$$</p>
+<h3 id="为什么同时需要两者"><a href="#为什么同时需要两者" class="headerlink" title="为什么同时需要两者"></a>为什么同时需要两者</h3><p>核心动机来自实际训练中的观察：QRM 单独使用时，在部分任务上偏序一致率不足。特别是在”模型回答比 GT 更好”的 case 上，QRM 难以给出准确判断。</p>
+<ul>
+<li><strong>GRM + Rubrics 解决客观性问题</strong>：结构化判据，逐条判定要点是否命中，减少风格偏置。</li>
+<li><strong>QRM 补充主观质量维度</strong>：捕捉整体可读性、用户体验等难以用 checklist 穷举的维度。</li>
+</ul>
+<div class="note info flat"><p><strong>GRM 是结构化锚点，QRM 是质量兜底。两者互补。</strong></p>
+</div>
+
+<hr>
+<h2 id="三、Agentic-训练（Long-Trajectory）中的体现"><a href="#三、Agentic-训练（Long-Trajectory）中的体现" class="headerlink" title="三、Agentic 训练（Long Trajectory）中的体现"></a>三、Agentic 训练（Long Trajectory）中的体现</h2><p>当从单轮 RLHF 走向 agentic &#x2F; long-trajectory 训练时，核心矛盾是：<strong>trajectory 很长、action 很多、reward 很稀疏</strong>。每一个概念都面临新的挑战。</p>
+<h3 id="ORM-→-PRM-的演进"><a href="#ORM-→-PRM-的演进" class="headerlink" title="ORM → PRM 的演进"></a>ORM → PRM 的演进</h3><table>
+<thead>
+<tr>
+<th align="center">类型</th>
+<th align="left">全称</th>
+<th align="center">粒度</th>
+<th align="left">角色</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong>ORM</strong></td>
+<td align="left">Outcome Reward Model</td>
+<td align="center">trajectory 级</td>
+<td align="left">Verifier&#x2F;Checker 的模型化版本——只看最终结果</td>
+</tr>
+<tr>
+<td align="center"><strong>PRM</strong></td>
+<td align="left">Process Reward Model</td>
+<td align="center">step 级</td>
+<td align="left">Scorer 的 agentic 版本——对每一步打分</td>
+</tr>
+<tr>
+<td align="center"><strong>AgentPRM</strong></td>
+<td align="left">Agent Process Reward Model</td>
+<td align="center">step 级 + action-aware</td>
+<td align="left">PRM 专为 agent action 序列设计的变体</td>
+</tr>
+</tbody></table>
+<p>在 agent trajectory $[s_0 \rightarrow a_1 \rightarrow s_1 \rightarrow a_2 \rightarrow s_2 \rightarrow … \rightarrow a_n \rightarrow s_n]$ 中：</p>
+<ul>
+<li><strong>Verifier&#x2F;Checker</strong>：只看 $s_n$（最终结果对不对），给出 outcome reward（0&#x2F;1）。</li>
+<li><strong>PRM &#x2F; AgentPRM</strong>（step-level Scorer）：看每个 $(s_i, a_{i+1})$，判断这步 action 好不好。</li>
+<li><strong>Rubric</strong>：定义每步 action 的好坏标准——工具调用参数正确？工具选对了？检索 query 是否相关？</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">step_reward[i] = PRM(s_i, a_&#123;i+1&#125;)   ← step-level</span><br><span class="line">outcome_reward = Verifier(s_n)     ← trajectory-level</span><br><span class="line">total_reward = f(step_rewards, outcome_reward)</span><br></pre></td></tr></table></figure>
+
+<div class="note warning flat"><p>引入 PRM 的核心意义是解决 <strong>credit assignment</strong> 问题：如果只有 trajectory 级的 outcome reward，50 步的 agent trajectory 中，模型无法分辨是哪一步导致了成功或失败。</p>
+</div>
+
+<hr>
+<h2 id="四、RLVR-的本质是-Contextual-Bandit"><a href="#四、RLVR-的本质是-Contextual-Bandit" class="headerlink" title="四、RLVR 的本质是 Contextual Bandit"></a>四、RLVR 的本质是 Contextual Bandit</h2><h3 id="“RLVR-本质上是多臂老虎机”——这个说法的来源"><a href="#“RLVR-本质上是多臂老虎机”——这个说法的来源" class="headerlink" title="“RLVR 本质上是多臂老虎机”——这个说法的来源"></a>“RLVR 本质上是多臂老虎机”——这个说法的来源</h3><p>在标准 RLVR（如 DeepSeek-R1 的数学训练）中：</p>
+<ol>
+<li>模型一次性生成完整 response（一条 trajectory）。</li>
+<li>Verifier 只看最终答案，给 0 或 1。</li>
+<li>没有中间 reward，没有状态转移的反馈。</li>
+</ol>
+<p>用 GRPO 来看更直观：对同一个 prompt 采样 N 条 response → verifier 打分 → 好的 response 整体 upweight，差的 downweight。<strong>每条完整 response 是一个 arm，reward 是 binary，策略是调整各 arm 的采样概率。</strong></p>
+<h3 id="严格来说是-Contextual-Bandit"><a href="#严格来说是-Contextual-Bandit" class="headerlink" title="严格来说是 Contextual Bandit"></a>严格来说是 Contextual Bandit</h3><table>
+<thead>
+<tr>
+<th align="center">要素</th>
+<th align="left">经典 MAB</th>
+<th align="left">Contextual Bandit</th>
+<th align="left">RLVR</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">Context</td>
+<td align="left">无</td>
+<td align="left">每轮有不同的 x</td>
+<td align="left">prompt</td>
+</tr>
+<tr>
+<td align="center">Arm&#x2F;Action</td>
+<td align="left">K 个固定 arm</td>
+<td align="left">给定 context 选 action</td>
+<td align="left">给定 prompt 采样 response</td>
+</tr>
+<tr>
+<td align="center">策略</td>
+<td align="left">全局一个分布 $\pi(a)$</td>
+<td align="left">条件策略 $\pi(a \mid x)$</td>
+<td align="left">$\pi(response \mid prompt)$ &#x3D; LLM</td>
+</tr>
+<tr>
+<td align="center">目标</td>
+<td align="left">最大化累计 reward</td>
+<td align="left">最大化 $E[r(x,a)]$</td>
+<td align="left">最大化 $E[verifier(prompt, response)]$</td>
+</tr>
+</tbody></table>
+<p>三个条件确认 RLVR 是 contextual bandit：</p>
+<ol>
+<li><strong>有 context</strong>（prompt）→ 不是经典 MAB。</li>
+<li><strong>Action 不影响下一个 context</strong>（prompt 来自数据集，不因 response 改变）→ 不是 MDP。</li>
+<li><strong>单步决策</strong>，整条 response 作为一个不可分的 action，拿到一个 scalar reward 就结束 → bandit。</li>
+</ol>
+<h3 id="“Token-级梯度存在”不等于”Token-级-Credit-Assignment”"><a href="#“Token-级梯度存在”不等于”Token-级-Credit-Assignment”" class="headerlink" title="“Token 级梯度存在”不等于”Token 级 Credit Assignment”"></a>“Token 级梯度存在”不等于”Token 级 Credit Assignment”</h3><p>RLVR 中 REINFORCE&#x2F;GRPO 的梯度公式展开到了每个 token：</p>
+<p>$$<br>\nabla J \approx \sum_i \nabla \log \pi(a_i \mid s_{&lt;i}) \cdot R(\tau)<br>$$</p>
+<p>但 <strong>$R(\tau)$ 对所有 token 完全相同</strong>。token 37 做了关键推理，token 12 输出了 filler word，两者乘的 reward 信号一模一样。梯度在形式上是 token 级的，但<strong>信息量是 trajectory 级的</strong>。</p>
+<div class="note info flat"><p>Token 级梯度是 autoregressive 参数化的副产品，不是 token 级的 credit assignment。只要 reward 信号对所有 token 是同一个标量广播，优化的信息结构就是 bandit。</p>
+</div>
+
+<h3 id="泛化靠参数共享"><a href="#泛化靠参数共享" class="headerlink" title="泛化靠参数共享"></a>泛化靠参数共享</h3><p>Contextual bandit 的核心难题是<strong>泛化</strong>：模型不可能对每个 prompt 都采样足够多次，必须从已见 prompt 的 reward 信号泛化到未见 prompt。</p>
+<p>泛化的物理载体是<strong>参数共享</strong>：所有 prompt 共享同一组 Transformer 参数 $\theta$，语义相似的 prompt 产生相似的 hidden states，对 prompt A 的策略更新通过 attention &#x2F; FFN 权重传导到 prompt B。</p>
+<p>这与经典 MAB 形成鲜明对比：经典 MAB 每个 arm 有独立的 reward 估计（Q-table），arm A 的经验不影响 arm B。<strong>参数共享 + 表征学习是让 contextual bandit 在无限 context 空间上可行的唯一途径。</strong></p>
+<hr>
+<h2 id="五、RLVR-超越经典-Contextual-Bandit-的部分"><a href="#五、RLVR-超越经典-Contextual-Bandit-的部分" class="headerlink" title="五、RLVR 超越经典 Contextual Bandit 的部分"></a>五、RLVR 超越经典 Contextual Bandit 的部分</h2><p>RLVR 的问题结构是 contextual bandit，但它的实现方式超越了经典 CB 框架的若干基础假设：</p>
+<table>
+<thead>
+<tr>
+<th align="center">维度</th>
+<th align="left">经典 CB</th>
+<th align="left">RLVR 超越之处</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong>Action 空间</strong></td>
+<td align="left">有限离散</td>
+<td align="left">无穷、变长、结构化 token 序列</td>
+</tr>
+<tr>
+<td align="center"><strong>Action 内部</strong></td>
+<td align="left">原子不可分</td>
+<td align="left">autoregressive 序列，梯度可达 token 级</td>
+</tr>
+<tr>
+<td align="center"><strong>正则化</strong></td>
+<td align="left">L2 on 参数</td>
+<td align="left">$KL(\pi_\theta \parallel \pi_{ref})$ on 分布</td>
+</tr>
+<tr>
+<td align="center"><strong>平稳性</strong></td>
+<td align="left">假设 i.i.d.</td>
+<td align="left">on-policy 导致非平稳</td>
+</tr>
+<tr>
+<td align="center"><strong>采样策略</strong></td>
+<td align="left">单次拉取</td>
+<td align="left">N 路并行 + 组内对比（GRPO）</td>
+</tr>
+</tbody></table>
+<p>经典 bandit 更新的是 arm 的权重，RLVR 更新的是<strong>生成 arm 的”工厂”的参数</strong>。这些超越使得 RL 工具箱在 bandit 问题上的”大材小用”有了合理性。</p>
+<hr>
+<h2 id="六、KL-正则化：参数空间-vs-分布空间"><a href="#六、KL-正则化：参数空间-vs-分布空间" class="headerlink" title="六、KL 正则化：参数空间 vs 分布空间"></a>六、KL 正则化：参数空间 vs 分布空间</h2><h3 id="RLVR-的优化目标"><a href="#RLVR-的优化目标" class="headerlink" title="RLVR 的优化目标"></a>RLVR 的优化目标</h3><p>$$<br>\max_\theta \mathbb{E}<em>{x \sim D, y \sim \pi</em>\theta(\cdot \mid x)} [ R(x, y) ] - \beta \cdot KL( \pi_\theta \parallel \pi_{ref} )<br>$$</p>
+<p>KL 项在 autoregressive 模型中分解为逐 token 求和，每个 token 位置都有独立的 KL 惩罚：</p>
+<ul>
+<li>token 与 ref 一致且 response 正确 → <strong>强化</strong>。</li>
+<li>token 偏离 ref 但 response 正确 → <strong>有条件强化</strong>（偏离代价小于 reward 增益时才保留）。</li>
+<li>token 偏离 ref 且 response 错误 → <strong>双重惩罚</strong>，快速拉回。</li>
+</ul>
+<div class="note info flat"><p>KL 实际上承担了部分 credit assignment 的功能——它告诉模型”哪些 token 偏离了正常轨道”，虽然这个信号不是 task-specific 的。</p>
+</div>
+
+<h3 id="与经典-CB-正则化的对比"><a href="#与经典-CB-正则化的对比" class="headerlink" title="与经典 CB 正则化的对比"></a>与经典 CB 正则化的对比</h3><table>
+<thead>
+<tr>
+<th align="center">维度</th>
+<th align="left">经典 CB 正则化</th>
+<th align="left">RLVR KL 正则化</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong>正则化对象</strong></td>
+<td align="left">参数 $\theta$ 本身（权重向量）</td>
+<td align="left">策略分布 $\pi_\theta$（函数空间）</td>
+</tr>
+<tr>
+<td align="center"><strong>度量</strong></td>
+<td align="left">L2 范数 $|\theta|^2$</td>
+<td align="left">$KL(\pi_\theta \parallel \pi_{ref})$</td>
+</tr>
+<tr>
+<td align="center"><strong>参考点</strong></td>
+<td align="left">原点（$\theta&#x3D;0$）</td>
+<td align="left">SFT reference model</td>
+</tr>
+<tr>
+<td align="center"><strong>语义</strong></td>
+<td align="left">“参数不要太大” → 防过拟合</td>
+<td align="left">“行为不要偏离太远” → 防能力退化</td>
+</tr>
+<tr>
+<td align="center"><strong>动机</strong></td>
+<td align="left">让学习过程在统计上可行</td>
+<td align="left">让学习结果在功能上可用</td>
+</tr>
+</tbody></table>
+<p>核心差异：<strong>L2 约束参数空间到原点的距离，KL 约束策略分布到 reference policy 的距离。</strong> 对 LLM 这种超参数化模型，参数空间的距离和行为变化几乎脱钩。</p>
+<h3 id="现代-CB-中的分布级正则化"><a href="#现代-CB-中的分布级正则化" class="headerlink" title="现代 CB 中的分布级正则化"></a>现代 CB 中的分布级正则化</h3><p>一些现代 CB 工作也用了分布级正则化（IPS clipping、POEM variance penalty 等），但动机不同：</p>
+<ul>
+<li><strong>CB 的分布级正则化</strong>：解决 off-policy 估计的统计偏差——“别离数据来源太远，否则 importance weight 不可信”。</li>
+<li><strong>RLVR 的 KL 正则化</strong>：解决 on-policy 训练中的能力退化——“别离好老师太远，否则会忘本”。</li>
+</ul>
+<p>RLVR 的 KL 约束还有一个优美的闭式解：</p>
+<p>$$<br>\pi^*(y \mid x) \propto \pi_{ref}(y \mid x) \cdot \exp(R(x,y) &#x2F; \beta)<br>$$</p>
+<p>最优策略是在 reference policy 基础上按 reward 做指数重加权。这正是 DPO 的理论基础——DPO 直接拟合这个闭式解而跳过了 RL。</p>
+<hr>
+<h2 id="七、总结：从概念到本质"><a href="#七、总结：从概念到本质" class="headerlink" title="七、总结：从概念到本质"></a>七、总结：从概念到本质</h2><ol>
+<li><p><strong>Scorer &#x2F; Rubric &#x2F; Reward &#x2F; Checker &#x2F; Verifier</strong> 是评估与打分的基础概念体系。Scorer 是泛称，Checker&#x2F;Verifier 是二值特例，Rubric 是标准，Reward 是合成结果。</p>
+</li>
+<li><p><strong>GRM 和 QRM</strong> 都是 Scorer 的具体实例，分别解决客观要点覆盖和主观质量评估问题，两者互补。</p>
+</li>
+<li><p>进入 <strong>agentic &#x2F; long-trajectory</strong> 训练后，所有概念从 trajectory 级下推到 step 级，核心新增物是 <strong>PRM</strong>（Process Reward Model），解决 credit assignment 问题。</p>
+</li>
+<li><p>回到 RLVR 本身，它的问题结构是 <strong>contextual bandit</strong>：有 context（prompt），单步决策（整条 response 作为不可分的 action），action 不影响下一个 context。</p>
+</li>
+<li><p>RLVR 超越经典 CB 的部分——无穷结构化 action 空间、KL 正则化、on-policy 非平稳性——正是让 RL 工具箱在 bandit 问题上”大材小用”的合理性所在。</p>
+</li>
+<li><p><strong>从 bandit 到 MDP 的跨越</strong>发生在引入 PRM 或真实环境交互的那一刻：action 开始影响环境 state，reward 开始因 step 而异，问题才真正成为 RL。</p>
+</li>
+</ol>
+<div class="note primary flat"><p><em>当前 LLM 训练中被称为”RL”的大部分工作，本质上是在用 RL 的算法工具箱求解 bandit 问题；而真正的 RL 问题——agentic training——才刚刚开始。</em></p>
+</div>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://ansoco.github.io/blog">ansoco</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://ansoco.github.io/blog/2026/04/17/rlvr-contextual-bandit/">https://ansoco.github.io/blog/2026/04/17/rlvr-contextual-bandit/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://ansoco.github.io/blog" target="_blank">Tech Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/blog/tags/RL/">RL</a><a class="post-meta__tags" href="/blog/tags/RLHF/">RLHF</a><a class="post-meta__tags" href="/blog/tags/RLVR/">RLVR</a><a class="post-meta__tags" href="/blog/tags/LLM/">LLM</a><a class="post-meta__tags" href="/blog/tags/Agentic-Training/">Agentic Training</a></div><div class="post-share"><div class="social-share" data-image="/blog/img/butterfly-icon.png" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/blog/img/butterfly-icon.png" onerror="this.onerror=null;this.src='/blog/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">ansoco</div><div class="author-info-description">探索 RL、LLM Training 与 Agentic AI</div><div class="site-data"><a href="/blog/archives/"><div class="headline">文章</div><div class="length-num">1</div></a><a href="/blog/tags/"><div class="headline">标签</div><div class="length-num">5</div></a><a href="/blog/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/ansoco"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/ansoco" target="_blank" title="Github"><i class="fab fa-github"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">技术笔记，不定期更新</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5%EF%BC%9AScorer-Rubric-Reward-Checker-Verifier"><span class="toc-text">一、基础概念：Scorer &#x2F; Rubric &#x2F; Reward &#x2F; Checker &#x2F; Verifier</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81GRM-%E4%B8%8E-QRM%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E4%B8%A4%E4%B8%AA%EF%BC%9F"><span class="toc-text">二、GRM 与 QRM：为什么需要两个？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9A%E4%B9%89"><span class="toc-text">定义</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9C%A8%E8%AE%AD%E7%BB%83%E6%B5%81%E7%A8%8B%E4%B8%AD%E7%9A%84%E7%BB%84%E5%90%88"><span class="toc-text">在训练流程中的组合</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%90%8C%E6%97%B6%E9%9C%80%E8%A6%81%E4%B8%A4%E8%80%85"><span class="toc-text">为什么同时需要两者</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81Agentic-%E8%AE%AD%E7%BB%83%EF%BC%88Long-Trajectory%EF%BC%89%E4%B8%AD%E7%9A%84%E4%BD%93%E7%8E%B0"><span class="toc-text">三、Agentic 训练（Long Trajectory）中的体现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ORM-%E2%86%92-PRM-%E7%9A%84%E6%BC%94%E8%BF%9B"><span class="toc-text">ORM → PRM 的演进</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81RLVR-%E7%9A%84%E6%9C%AC%E8%B4%A8%E6%98%AF-Contextual-Bandit"><span class="toc-text">四、RLVR 的本质是 Contextual Bandit</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%80%9CRLVR-%E6%9C%AC%E8%B4%A8%E4%B8%8A%E6%98%AF%E5%A4%9A%E8%87%82%E8%80%81%E8%99%8E%E6%9C%BA%E2%80%9D%E2%80%94%E2%80%94%E8%BF%99%E4%B8%AA%E8%AF%B4%E6%B3%95%E7%9A%84%E6%9D%A5%E6%BA%90"><span class="toc-text">“RLVR 本质上是多臂老虎机”——这个说法的来源</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%A5%E6%A0%BC%E6%9D%A5%E8%AF%B4%E6%98%AF-Contextual-Bandit"><span class="toc-text">严格来说是 Contextual Bandit</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%80%9CToken-%E7%BA%A7%E6%A2%AF%E5%BA%A6%E5%AD%98%E5%9C%A8%E2%80%9D%E4%B8%8D%E7%AD%89%E4%BA%8E%E2%80%9DToken-%E7%BA%A7-Credit-Assignment%E2%80%9D"><span class="toc-text">“Token 级梯度存在”不等于”Token 级 Credit Assignment”</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B3%9B%E5%8C%96%E9%9D%A0%E5%8F%82%E6%95%B0%E5%85%B1%E4%BA%AB"><span class="toc-text">泛化靠参数共享</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81RLVR-%E8%B6%85%E8%B6%8A%E7%BB%8F%E5%85%B8-Contextual-Bandit-%E7%9A%84%E9%83%A8%E5%88%86"><span class="toc-text">五、RLVR 超越经典 Contextual Bandit 的部分</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD%E3%80%81KL-%E6%AD%A3%E5%88%99%E5%8C%96%EF%BC%9A%E5%8F%82%E6%95%B0%E7%A9%BA%E9%97%B4-vs-%E5%88%86%E5%B8%83%E7%A9%BA%E9%97%B4"><span class="toc-text">六、KL 正则化：参数空间 vs 分布空间</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#RLVR-%E7%9A%84%E4%BC%98%E5%8C%96%E7%9B%AE%E6%A0%87"><span class="toc-text">RLVR 的优化目标</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8E%E7%BB%8F%E5%85%B8-CB-%E6%AD%A3%E5%88%99%E5%8C%96%E7%9A%84%E5%AF%B9%E6%AF%94"><span class="toc-text">与经典 CB 正则化的对比</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8E%B0%E4%BB%A3-CB-%E4%B8%AD%E7%9A%84%E5%88%86%E5%B8%83%E7%BA%A7%E6%AD%A3%E5%88%99%E5%8C%96"><span class="toc-text">现代 CB 中的分布级正则化</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E6%80%BB%E7%BB%93%EF%BC%9A%E4%BB%8E%E6%A6%82%E5%BF%B5%E5%88%B0%E6%9C%AC%E8%B4%A8"><span class="toc-text">七、总结：从概念到本质</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/blog/2026/04/17/rlvr-contextual-bandit/" title="从 Scorer 到 Contextual Bandit：拆解 RLVR 的概念体系与本质">从 Scorer 到 Contextual Bandit：拆解 RLVR 的概念体系与本质</a><time datetime="2026-04-17T11:00:00.000Z" title="发表于 2026-04-17 19:00:00">2026-04-17</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2026 By ansoco</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/blog/js/utils.js?v=5.5.4"></script><script src="/blog/js/main.js?v=5.5.4"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
