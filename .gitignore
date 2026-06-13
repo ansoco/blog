@@ -5,4 +5,5 @@ db.json
 *.log
 .DS_Store
 .claude/
+.trae/
 AGENTS.md
