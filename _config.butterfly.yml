@@ -144,7 +144,7 @@ beautify:
   enable: true
   field: post
   title-prefix-icon: '\f0c1'
-  title-prefix-icon-color: '#3b82f6'
+  title-prefix-icon-color: '#3f6f8f'
 
 # 圆角
 hr_icon:
@@ -171,12 +171,12 @@ fancybox: true
 snackbar:
   enable: true
   position: bottom-left
-  bg_light: '#3b82f6'
-  bg_dark: '#2d3436'
+  bg_light: '#3f6f8f'
+  bg_dark: '#1f3747'
 
 # ========== 自定义CSS注入（玻璃态效果） ==========
 inject:
   head:
-    - <link rel="stylesheet" href="/blog/css/custom.css?v=toc9">
+    - <link rel="stylesheet" href="/blog/css/custom.css?v=theme1">
   bottom:
-    - <script src="/blog/js/toc-smart.js?v=toc9"></script>
+    - <script src="/blog/js/toc-smart.js?v=theme1"></script>
