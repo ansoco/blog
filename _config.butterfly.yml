@@ -27,10 +27,10 @@ social:
   fab fa-github: https://github.com/ansoco || Github
 
 # ========== 首页 ==========
-# 主页顶部大图 - 深蓝青渐变背景
+# 主页顶部大图 - 克制的研究笔记氛围
 index_img:
-default_top_img: linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(59, 130, 246, 0.85) 50%, rgba(20, 184, 166, 0.8) 100%)
-post_default_top_img: linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(59, 130, 246, 0.85) 50%, rgba(20, 184, 166, 0.8) 100%)
+default_top_img: radial-gradient(circle at 18% 18%, rgba(219, 234, 240, 0.9) 0%, rgba(219, 234, 240, 0) 34%), radial-gradient(circle at 82% 24%, rgba(185, 205, 211, 0.75) 0%, rgba(185, 205, 211, 0) 32%), linear-gradient(135deg, #eef1ed 0%, #dfe9eb 48%, #cddfe2 100%)
+post_default_top_img: radial-gradient(circle at 18% 18%, rgba(219, 234, 240, 0.9) 0%, rgba(219, 234, 240, 0) 34%), radial-gradient(circle at 82% 24%, rgba(185, 205, 211, 0.75) 0%, rgba(185, 205, 211, 0) 32%), linear-gradient(135deg, #eef1ed 0%, #dfe9eb 48%, #cddfe2 100%)
 
 # 首页文章卡片样式
 index_layout: 3
@@ -91,34 +91,34 @@ aside:
     category: true
   card_author:
     enable: true
-    description: '探索 RL、LLM Training 与 Agentic AI'
+    description: '关于 RL、LLM Training 与 Agentic AI 的研究笔记'
     button:
       enable: true
       icon: fab fa-github
-      text: Follow Me
+      text: GitHub
       link: https://github.com/ansoco
   card_announcement:
     enable: true
-    content: '技术笔记，不定期更新'
+    content: '记录模型训练、强化学习和 agentic systems 中值得反复咀嚼的问题。'
   card_recent_post:
     enable: true
     limit: 5
     sort: date
     sort_order:
   card_categories:
-    enable: true
+    enable: false
     limit: 8
     expand: none
     sort_order:
   card_tags:
-    enable: true
+    enable: false
     limit: 20
-    color: true
+    color: false
     orderby: random
     order: 1
     sort_order:
   card_archives:
-    enable: true
+    enable: false
     type: monthly
     format: MMMM YYYY
     order: -1
@@ -177,4 +177,6 @@ snackbar:
 # ========== 自定义CSS注入（玻璃态效果） ==========
 inject:
   head:
-    - <link rel="stylesheet" href="/blog/css/custom.css">
+    - <link rel="stylesheet" href="/blog/css/custom.css?v=toc9">
+  bottom:
+    - <script src="/blog/js/toc-smart.js?v=toc9"></script>
