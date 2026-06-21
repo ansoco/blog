@@ -20,7 +20,7 @@ highlight_copy: true
 highlight_lang: true
 highlight_shrink: false
 highlight_height_limit: 400
-code_word_wrap: true
+code_word_wrap: false
 
 # ========== 社交图标 ==========
 social:
@@ -177,6 +177,6 @@ snackbar:
 # ========== 自定义CSS注入（玻璃态效果） ==========
 inject:
   head:
-    - <link rel="stylesheet" href="/blog/css/custom.css?v=theme1">
+    - <link rel="stylesheet" href="/blog/css/custom.css?v=code3">
   bottom:
-    - <script src="/blog/js/toc-smart.js?v=theme1"></script>
+    - <script src="/blog/js/toc-smart.js?v=code3"></script>

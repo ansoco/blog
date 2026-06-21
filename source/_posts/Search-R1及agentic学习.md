@@ -16,11 +16,11 @@ description:
 $$L^{PPO}=L^{Clip}+c_1L^{V}-c_2H(\pi_\theta)$$
 - 策略和价值函数异步更新，熵函数鼓励策略探索性
 
- ```text
-                                                                          standard PPO:                                                                                                                                                                                                             
-L_actor = E[ min(ratio·A, clip(ratio)·A) ] - β · H(π(·|s))                                                                                                                                          
-					↑ pg_loss            ↑ entropy_loss · entropy_coeff                                                                                                                                                 
- ```                                    
+```text
+standard PPO:
+L_actor = E[ min(ratio·A, clip(ratio)·A) ] - β · H(π(·|s))
+				↑ pg_loss            ↑ entropy_loss · entropy_coeff
+```
 
 - 奖励函数
 $$R=R_{out\_ans}+\alpha R_{search\_valid}-\beta R_{search\_invlaid}$$

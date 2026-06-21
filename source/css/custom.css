@@ -416,7 +416,7 @@ body::before {
   color: var(--ink-soft);
 }
 
-#article-container table {
+#article-container > table {
   border-radius: var(--radius-inner);
   overflow: hidden;
 }
@@ -461,6 +461,9 @@ body::before {
   border: 1px solid var(--line) !important;
   box-shadow: none !important;
   background: #f4f7f7 !important;
+  max-width: 100%;
+  overflow: hidden !important;
+  -webkit-overflow-scrolling: touch;
 }
 
 [data-theme="dark"] .highlight,
@@ -476,10 +479,123 @@ body::before {
   background: transparent !important;
 }
 
+.highlight .highlight-tools,
+#article-container figure.highlight .highlight-tools {
+  position: relative;
+  z-index: 3;
+  width: 100% !important;
+  min-width: 100% !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--line) !important;
+  border-radius: 12px 12px 0 0 !important;
+  background: rgba(255, 255, 252, 0.82) !important;
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] .highlight .highlight-tools,
+[data-theme="dark"] #article-container figure.highlight .highlight-tools {
+  background: rgba(17, 28, 37, 0.88) !important;
+}
+
+.highlight table,
+#article-container figure.highlight table {
+  display: block !important;
+  width: 100% !important;
+  min-width: 100% !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-spacing: 0 !important;
+  border-collapse: separate !important;
+  table-layout: auto !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.highlight tbody,
+.highlight tr,
+#article-container figure.highlight tbody,
+#article-container figure.highlight tr {
+  display: table !important;
+  min-width: 100% !important;
+}
+
+.highlight td,
+#article-container figure.highlight td {
+  padding: 0 !important;
+  border: 0 !important;
+  vertical-align: top !important;
+}
+
+.highlight .gutter {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  width: 3.2rem !important;
+  min-width: 3.2rem !important;
+  user-select: none;
+  border-right: 1px solid var(--line) !important;
+  background: rgba(244, 247, 247, 0.96) !important;
+}
+
+[data-theme="dark"] .highlight .gutter {
+  background: rgba(17, 28, 37, 0.96) !important;
+}
+
+.highlight .gutter pre {
+  padding-inline: 0.7rem !important;
+  color: var(--muted) !important;
+  text-align: right;
+}
+
+.highlight .code {
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+}
+
+.highlight .code pre {
+  display: inline-block;
+  min-width: 100%;
+  width: max-content;
+  max-width: none;
+  padding: 0.72rem 1rem 1rem !important;
+  overflow: visible !important;
+}
+
 .highlight pre,
 code {
   font-family: "JetBrains Mono", "Fira Code", "SF Mono", Monaco, Consolas, monospace !important;
   font-variant-ligatures: none;
+}
+
+.highlight pre,
+.highlight .line,
+#article-container figure.highlight pre,
+#article-container figure.highlight .line {
+  line-height: 1.72 !important;
+  white-space: pre !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+}
+
+.highlight table::-webkit-scrollbar {
+  height: 9px;
+}
+
+.highlight table::-webkit-scrollbar-track {
+  background: rgba(31, 41, 51, 0.045);
+  border-radius: 999px;
+}
+
+.highlight table::-webkit-scrollbar-thumb {
+  background: rgba(63, 111, 143, 0.34);
+  border-radius: 999px;
+}
+
+.highlight table::-webkit-scrollbar-thumb:hover {
+  background: rgba(63, 111, 143, 0.52);
 }
 
 /* 标签、按钮和分页：用轻状态替代缩放感 */
