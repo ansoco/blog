@@ -177,6 +177,6 @@ snackbar:
 # ========== 自定义CSS注入（玻璃态效果） ==========
 inject:
   head:
-    - <link rel="stylesheet" href="/blog/css/custom.css?v=code3">
+    - <link rel="stylesheet" href="/blog/css/custom.css?v=code7">
   bottom:
-    - <script src="/blog/js/toc-smart.js?v=code3"></script>
+    - <script src="/blog/js/toc-smart.js?v=code7"></script>
